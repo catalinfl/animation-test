@@ -31,6 +31,29 @@ func (q *Queries) CreateAuthor(ctx context.Context, arg CreateAuthorParams) (Aut
 	return i, err
 }
 
+const createComment = `-- name: CreateComment :one
+INSERT INTO comments (content, author_id, post_id) VALUES
+($1, $2, $3) RETURNING id, content, author_id, post_id
+`
+
+type CreateCommentParams struct {
+	Content  string `json:"content"`
+	AuthorID int64  `json:"author_id"`
+	PostID   int64  `json:"post_id"`
+}
+
+func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error) {
+	row := q.db.QueryRow(ctx, createComment, arg.Content, arg.AuthorID, arg.PostID)
+	var i Comment
+	err := row.Scan(
+		&i.ID,
+		&i.Content,
+		&i.AuthorID,
+		&i.PostID,
+	)
+	return i, err
+}
+
 const createPost = `-- name: CreatePost :one
 INSERT INTO posts (title, content, author_id)
 VALUES ($1, $2, $3) 
@@ -100,6 +123,66 @@ func (q *Queries) GetAuthor(ctx context.Context, id int64) (Author, error) {
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getCommentsForAuthor = `-- name: GetCommentsForAuthor :many
+SELECT id, content, author_id, post_id FROM comments WHERE
+author_id = $1
+`
+
+func (q *Queries) GetCommentsForAuthor(ctx context.Context, authorID int64) ([]Comment, error) {
+	rows, err := q.db.Query(ctx, getCommentsForAuthor, authorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Comment
+	for rows.Next() {
+		var i Comment
+		if err := rows.Scan(
+			&i.ID,
+			&i.Content,
+			&i.AuthorID,
+			&i.PostID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCommentsForPost = `-- name: GetCommentsForPost :many
+SELECT id, content, author_id, post_id FROM comments WHERE
+post_id = $1
+`
+
+func (q *Queries) GetCommentsForPost(ctx context.Context, postID int64) ([]Comment, error) {
+	rows, err := q.db.Query(ctx, getCommentsForPost, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Comment
+	for rows.Next() {
+		var i Comment
+		if err := rows.Scan(
+			&i.ID,
+			&i.Content,
+			&i.AuthorID,
+			&i.PostID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getPost = `-- name: GetPost :one

@@ -19,6 +19,7 @@ type Comment struct {
 	ID       int64  `json:"id"`
 	Content  string `json:"content"`
 	AuthorID int64  `json:"author_id"`
+	PostID   int64  `json:"post_id"`
 }
 
 type Post struct {

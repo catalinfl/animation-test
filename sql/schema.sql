@@ -14,7 +14,7 @@ CREATE TABLE posts (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     author_id BIGINT NOT NULL,
-    FOREIGN KEY (author_id) REFERENCES authors(id)
+    CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES authors(id)
 );
 
 
@@ -22,5 +22,7 @@ CREATE TABLE comments (
     id BIGSERIAL PRIMARY KEY,
     content TEXT NOT NULL,
     author_id BIGINT NOT NULL,
-    FOREIGN KEY (author_id) REFERENCES authors(id)
-)
+    post_id BIGINT NOT NULL,
+    CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES authors(id),
+    CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts(id)
+);
